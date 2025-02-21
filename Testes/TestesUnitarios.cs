@@ -7,84 +7,83 @@ using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Testes
+namespace Testes;
+
+public class TestesUnitarios
 {
-    public class TestesUnitarios
+    private readonly ITestOutputHelper output;
+
+    public TestesUnitarios(ITestOutputHelper output)
     {
-        private readonly ITestOutputHelper output;
+        this.output = output;
+    }
 
-        public TestesUnitarios(ITestOutputHelper output)
+    /// <summary>
+    /// Teste simples para verificar que os valores est√£o corretos
+    /// </summary>
+    [Fact]
+    public void TesteDivisaoNaoPerdeDinheiro()
+    {
+        Dinheiro dinheiro = 1.00M;
+        var divisao = dinheiro.DividirEntre(3);
+
+        Assert.Collection(divisao
+            , item => Assert.Equal(0.34M, item)
+            , item => Assert.Equal(0.33M, item)
+            , item => Assert.Equal(0.33M, item));
+    }
+
+    /// <summary>
+    /// teste da propriedade:
+    ///
+    /// a soma da lista da divis√£o (quocientes * divisor + resto) sempre ser√° igual ao dividendo
+    /// </summary>
+    /// <param name="valor"></param>
+    /// <param name="divisor"></param>
+    [Property(MaxTest = 10000)]
+    public Property TesteDivisaoNaoPerdeDinheiro2(decimal valor, uint divisor)
+    {
+        Dinheiro dinheiro = valor;
+        var divisao = dinheiro.DividirEntre(divisor);
+        Func<bool> property = () => dinheiro.Equals(divisao.Aggregate((Dinheiro)0, (acc, novo) => acc + novo));
+        return property.When(valor > 0 && divisor > 0);
+    }
+
+
+    /// <summary>
+    /// Qualquer valor dividido por 0 √© indefinido,
+    /// aqui eu retorno uma lista vazia
+    /// </summary>
+    /// <param name="valor">dinheiro</param>
+    [Property(MaxTest = 10000)]
+    public Property TesteDivisaoPorZeroRetornaListaVazia(decimal valor)
+    {
+        Dinheiro dinheiro = valor;
+        var divisao = dinheiro.DividirEntre(0);
+        return (!divisao.Any()).ToProperty();
+    }
+
+    [Fact]
+    public void TesteTecnico()
+    {
+        var compras = new List<(Item item, byte quantidade)>
         {
-            this.output = output;
-        }
+            //(new Item { Nome = "item1", PrecoUnitario = 1.99M }, 10),
+            //(new Item { Nome = "item2", PrecoUnitario = 0.02M }, 5),
+            (new Item { Nome = "item3", PrecoUnitario = 0.01M }, 3)
+        };
 
-        /// <summary>
-        /// Teste simples para verificar que os valores est„o corretos
-        /// </summary>
-        [Fact]
-        public void TesteDivisaoNaoPerdeDinheiro()
+        var emails = new List<string>
         {
-            Dinheiro dinheiro = 1.00M;
-            var divisao = dinheiro.DividirEntre(3);
+            "email1", "email2", "email3", "email4"
+        };
 
-            Assert.Collection(divisao
-                , item => Assert.Equal(0.34M, item)
-                , item => Assert.Equal(0.33M, item)
-                , item => Assert.Equal(0.33M, item));
-        }
+        var resultado = CarrinhoDeCompras.CalcularValorPorEmail(compras, emails);
 
-        /// <summary>
-        /// teste da propriedade:
-        /// 
-        /// a soma da lista da divis„o (quocientes * divisor + resto) sempre ser· igual ao dividendo
-        /// </summary>
-        /// <param name="valor"></param>
-        /// <param name="divisor"></param>
-        [Property(MaxTest = 10000)]
-        public Property TesteDivisaoNaoPerdeDinheiro2(decimal valor, uint divisor)
-        {
-            Dinheiro dinheiro = valor;
-            var divisao = dinheiro.DividirEntre(divisor);
-            Func<bool> property = () => dinheiro.Equals(divisao.Aggregate((Dinheiro)0, (acc, novo) => acc + novo));
-            return property.When(valor > 0 && divisor > 0);
-        }
-
-
-        /// <summary>
-        /// Qualquer valor dividido por 0 È indefinido,
-        /// aqui eu retorno uma lista vazia
-        /// </summary>
-        /// <param name="dinheiro"></param>
-        [Property(MaxTest = 10000)]
-        public Property TesteDivisaoPorZeroRetornaListaVazia(decimal valor)
-        {
-            Dinheiro dinheiro = valor;
-            var divisao = dinheiro.DividirEntre(0);
-            return ((!divisao.Any()).ToProperty());
-        }
-
-        [Fact]
-        public void TesteTecnico()
-        {
-            var compras = new List<(Item item, byte quantidade)> 
-            {
-                //(new Item { Nome = "item1", PrecoUnitario = 1.99M }, 10),
-                //(new Item { Nome = "item2", PrecoUnitario = 0.02M }, 5),
-                (new Item { Nome = "item3", PrecoUnitario = 0.01M }, 3),
-            };
-
-            var emails = new List<string> 
-            {
-                "email1", "email2", "email3", "email4"
-            };
-
-            var resultado = CarrinhoDeCompras.CalcularValorPorEmail(compras, emails);
-
-            // a funÁ„o n„o imprime nada se a lista de e-mails estiver vazia
-            resultado.ToList().ForEach(kp => output.WriteLine($"{kp.Key} = {kp.Value}"));
+        // a fun√ß√£o n√£o imprime nada se a lista de e-mails estiver vazia
+        resultado.ToList().ForEach(kp => output.WriteLine($"{kp.Key} = {kp.Value}"));
             
-            // mas tambÈm n„o joga nenhuma exceÁ„o
-            Assert.True(true);
-        }
+        // mas tamb√©m n√£o joga nenhuma exce√ß√£o
+        Assert.True(true);
     }
 }
